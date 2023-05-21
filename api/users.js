@@ -3,7 +3,7 @@ const { Router } = require('express')
 const { Business } = require('../models/business')
 const { Photo } = require('../models/photo')
 const { Review } = require('../models/review')
-const { User } = require('../models/user')
+const { User, UserClientFields } = require('../models/user')
 
 const router = Router()
 
@@ -39,5 +39,22 @@ router.get('/:userId/photos', async function (req, res) {
     photos: userPhotos
   })
 })
+
+// Route to login a user
+router.post('/login', async function (req, res, next) {
+  const { email, password } = req.body
+    const user = await User.findOne({ where: { email: email }})
+    if (user) {
+      if (user.validPassword(password)) {
+        // Respond with a JWT token
+        const token = user.genToken()
+        res.status(200).json({ token: token })
+      } else {
+        res.status(401).json(['Invalid email'])
+      }
+    } else {
+      res.status(401).json(['Invalid password'])
+    }
+  });
 
 module.exports = router
