@@ -5,6 +5,9 @@ const { Photo } = require('../models/photo')
 const { Review } = require('../models/review')
 const { User, UserClientFields } = require('../models/user')
 
+const reqAuthentication = require("../lib/authenticate");
+
+
 const router = Router()
 
 /*
@@ -56,5 +59,23 @@ router.post('/login', async function (req, res, next) {
       res.status(401).json(['Invalid password'])
     }
   });
+
+// Get a userId
+router.get('/:userId', reqAuthentication, async function (req, res, next) {
+  const userId = req.params.userId
+  const jwt = req.jwt
+  if (!jwt.admin && Number(jwt.id) !== Number(userId)) {
+    res.status(403).json({
+      error: `${jwt.id} isn't authorized to access ${userId}.`
+    })
+    return
+  }
+  const user = await User.findByPk(userId)
+  if (user) {
+    res.status(200).json(user)
+  } else {
+    next()
+  }
+});
 
 module.exports = router
