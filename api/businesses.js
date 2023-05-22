@@ -69,6 +69,11 @@ router.post('/', reqAuthentication, async function (req, res, next) {
       }
     }
   }
+  else {
+    res.status(403).send({
+      error: `${req.jwt.id} isn't authorized to create a business owned by ${req.body.ownerId}.`
+    })
+  }
 })
 
 /*
@@ -114,5 +119,22 @@ router.delete('/:businessId', async function (req, res, next) {
     next()
   }
 })
+
+
+function owned (req, res, next) {
+  const businessId = req.params.businessId
+  if (req.jwt.admin) {
+    return next()
+  }
+  Business.findByPk(businessId).then(business => {
+    if (business.ownerId === req.jwt.id) {
+      next()
+    } else {
+      res.status(403).send({
+        error: `${req.jwt.id} isn't authorized to modify the business ${businessId}.`
+      })
+    }
+  })
+}
 
 module.exports = router

@@ -3,21 +3,30 @@ const { ValidationError } = require('sequelize')
 
 const { Photo, PhotoClientFields } = require('../models/photo')
 
+const requAuthentication = require('../lib/authenticate')
+
 const router = Router()
 
 /*
  * Route to create a new photo.
  */
-router.post('/', async function (req, res, next) {
-  try {
-    const photo = await Photo.create(req.body, PhotoClientFields)
-    res.status(201).send({ id: photo.id })
-  } catch (e) {
-    if (e instanceof ValidationError) {
-      res.status(400).send({ error: e.message })
-    } else {
-      throw e
+router.post('/', reqAuthentication, async function (req, res, next) {
+  if(req.jwt.admin || Number(req.jwt.id) !== Number(req.body.userId)) {
+    try {
+      const photo = await Photo.create(req.body, PhotoClientFields)
+      res.status(201).send({ id: photo.id })
+    } catch (e) {
+      if (e instanceof ValidationError) {
+        res.status(400).send({ error: e.message })
+      } else {
+        throw e
+      }
     }
+  }
+  else {
+    res.status(403).send({
+      error: `${req.jwt.id} isn't authorized to create a photo for ${req.body.userId}.`
+    })
   }
 })
 
@@ -37,7 +46,7 @@ router.get('/:photoId', async function (req, res, next) {
 /*
  * Route to update a photo.
  */
-router.patch('/:photoId', async function (req, res, next) {
+router.patch('/:photoId', requAuthentication, ownned, async function (req, res, next) {
   const photoId = req.params.photoId
 
   /*
@@ -68,5 +77,22 @@ router.delete('/:photoId', async function (req, res, next) {
     next()
   }
 })
+
+
+function owned (req, res, next) {
+  const photoId = req.params.photoId
+  if (req.jwt.admin) {
+    return next()
+  }
+  Photo.findByPk(photoId).then(photo => {
+    if (photo.userId === req.jwt.id) {
+      next()
+    } else {
+      res.status(403).send({
+        error: `${req.jwt.id} isn't authorized to update photo ${photoId}.`
+      })
+    }
+  })
+}
 
 module.exports = router
