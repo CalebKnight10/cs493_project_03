@@ -3,21 +3,30 @@ const { ValidationError } = require('sequelize')
 
 const { Review, ReviewClientFields } = require('../models/review')
 
+const reqAuthentication = require('../lib/auth')
+
 const router = Router()
 
 /*
  * Route to create a new review.
  */
-router.post('/', async function (req, res, next) {
-  try {
-    const review = await Review.create(req.body, ReviewClientFields)
-    res.status(201).send({ id: review.id })
-  } catch (e) {
-    if (e instanceof ValidationError) {
-      res.status(400).send({ error: e.message })
-    } else {
-      throw e
+router.post('/', reqAuthentication, async function (req, res, next) {
+  if(req.jwt.admin || Number(req.jwt.id) === Number(req.body.ownerId)) {
+    try {
+      const review = await Review.create(req.body, ReviewClientFields)
+      res.status(201).send({ id: review.id })
+    } catch (e) {
+      if (e instanceof ValidationError) {
+        res.status(400).send({ error: e.message })
+      } else {
+        throw e
+      }
     }
+  }
+  else {
+    res.status(403).send({
+      error: `${req.jwt.id} isn't authorized to create a review ${req.body.ownerId}.`
+    })
   }
 })
 
@@ -37,9 +46,8 @@ router.get('/:reviewId', async function (req, res, next) {
 /*
  * Route to update a review.
  */
-router.patch('/:reviewId', async function (req, res, next) {
+router.patch('/:reviewId', reqAuthentication, owned, async function (req, res, next) {
   const reviewId = req.params.reviewId
-
   /*
    * Update review without allowing client to update businessId or userId.
    */
@@ -68,5 +76,22 @@ router.delete('/:reviewId', async function (req, res, next) {
     next()
   }
 })
+
+function owned (req, res, next) {
+  const reviewId = req.params.reviewId
+  if (req.jwt.admin) {
+    next()
+    return
+  }
+  Review.findByPk(reviewId).then(review => {
+    if (review.userId === Number(req.jwt.id)) {
+      next()
+    } else {
+      res.status(403).json({
+        error: `${req.jwt.id} isn't authorized to access review ${reviewId}.`
+      })
+    }
+  })
+}
 
 module.exports = router

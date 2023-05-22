@@ -3,7 +3,7 @@ const { ValidationError } = require('sequelize')
 
 const { Photo, PhotoClientFields } = require('../models/photo')
 
-const requAuthentication = require('../lib/authenticate')
+const reqAuthentication = require('../lib/authenticate')
 
 const router = Router()
 
@@ -11,7 +11,7 @@ const router = Router()
  * Route to create a new photo.
  */
 router.post('/', reqAuthentication, async function (req, res, next) {
-  if(req.jwt.admin || Number(req.jwt.id) !== Number(req.body.userId)) {
+  if(req.jwt.admin || Number(req.jwt.id) === Number(req.body.userId)) {
     try {
       const photo = await Photo.create(req.body, PhotoClientFields)
       res.status(201).send({ id: photo.id })
@@ -46,9 +46,8 @@ router.get('/:photoId', async function (req, res, next) {
 /*
  * Route to update a photo.
  */
-router.patch('/:photoId', requAuthentication, ownned, async function (req, res, next) {
+router.patch('/:photoId', requAuthentication, owned, async function (req, res, next) {
   const photoId = req.params.photoId
-
   /*
    * Update photo without allowing client to update businessId or userId.
    */
