@@ -46,7 +46,7 @@ router.get('/:photoId', async function (req, res, next) {
 /*
  * Route to update a photo.
  */
-router.patch('/:photoId', requAuthentication, owned, async function (req, res, next) {
+router.patch('/:photoId', reqAuthentication, owned, async function (req, res, next) {
   const photoId = req.params.photoId
   /*
    * Update photo without allowing client to update businessId or userId.
