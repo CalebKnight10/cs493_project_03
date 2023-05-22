@@ -3,7 +3,7 @@ const { ValidationError } = require('sequelize')
 
 const { Photo, PhotoClientFields } = require('../models/photo')
 
-const reqAuthentication = require('../lib/authenticate')
+const reqAuthentication = require('../lib/auth')
 
 const router = Router()
 
