@@ -4,6 +4,7 @@ const { ValidationError } = require('sequelize')
 const { Business, BusinessClientFields } = require('../models/business')
 const { Photo } = require('../models/photo')
 const { Review } = require('../models/review')
+const requAuthentication = require('../lib/authenticate')
 
 const router = Router()
 
@@ -55,15 +56,17 @@ router.get('/', async function (req, res) {
 /*
  * Route to create a new business.
  */
-router.post('/', async function (req, res, next) {
-  try {
-    const business = await Business.create(req.body, BusinessClientFields)
-    res.status(201).send({ id: business.id })
-  } catch (e) {
-    if (e instanceof ValidationError) {
-      res.status(400).send({ error: e.message })
-    } else {
-      throw e
+router.post('/', reqAuthentication, async function (req, res, next) {
+  if(req.jwt.admin || Number(req.jwt.id) === Number(req.body.ownerId)) {
+    try {
+      const business = await Business.create(req.body, BusinessClientFields)
+      res.status(201).send({ id: business.id })
+    } catch (e) {
+      if (e instanceof ValidationError) {
+        res.status(400).send({ error: e.message })
+      } else {
+        throw e
+      }
     }
   }
 })
@@ -86,7 +89,7 @@ router.get('/:businessId', async function (req, res, next) {
 /*
  * Route to update data for a business.
  */
-router.patch('/:businessId', async function (req, res, next) {
+router.patch('/:businessId', reqAuthentication, owned, async function (req, res, next) {
   const businessId = req.params.businessId
   const result = await Business.update(req.body, {
     where: { id: businessId },
