@@ -6,12 +6,11 @@ const bcrypt = require('bcryptjs');
 
 const jwt = require("jsonwebtoken")
 
-
 const User = sequelize.define('user', {
   userId: { type: DataTypes.INTEGER, allowNull: false },
   name: { type: DataTypes.STRING, allowNull: false },
   email: { type: DataTypes.STRING, allowNull: false },
-  password: { type: DataTypes.STRING, allowNull: false, async set(value) { const pwHash = await bcrypt.hash(User.password, 8); this.setDataValue('password', pwHash(value)); } },
+  password: { type: DataTypes.STRING, allowNull: false, set(password) { const salt = bcrypt.genSaltSync(); const hash = bcrypt.hashSync(password, salt); this.setDataValue('password', hash)}},
   admin: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: false }
 });
 

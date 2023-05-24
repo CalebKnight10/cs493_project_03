@@ -4,10 +4,11 @@
  */
 
 const sequelize = require('./lib/sequelize')
+
 const { Business, BusinessClientFields } = require('./models/business')
 const { Photo, PhotoClientFields } = require('./models/photo')
 const { Review, ReviewClientFields } = require('./models/review')
-const { User, UserClientFields } = require('./models/review')
+const { User, UserClientFields } = require('./models/user')
 
 const businessData = require('./data/businesses.json')
 const photoData = require('./data/photos.json')

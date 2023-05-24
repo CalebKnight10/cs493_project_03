@@ -3,7 +3,7 @@ const { Router } = require('express')
 const { Business } = require('../models/business')
 const { Photo } = require('../models/photo')
 const { Review } = require('../models/review')
-const { User, UserClientFields } = require('../models/user')
+const { User } = require('../models/user')
 
 const reqAuthentication = require('../lib/auth')
 
